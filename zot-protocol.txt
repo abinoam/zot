@@ -1,0 +1,451 @@
+Zot! communications protocol
+----------------------------
+
+Mike Macgirvin
+
+First published: 13-JUL-2011
+Last revision:   13-JUL-2011
+ 
+This work is public domain. 
+
+Zot! is a communications protocol for social communications on the web. The 
+protocol consists of two basic functions: send-message and remote-access.
+
+These functions are built on top of other web standards, such as 
+webfinger/lrdd and atom/activitystreams. Communications are encrypted and
+both sides of the communication verified through crytpographic means before
+communication is allowed.
+
+Zot! does not prove identity. It verifies communications endpoints, and
+secures messages between those endpoints.  
+
+Zot! is an evolution of and a simplification of many concepts which
+originated within the DFRN protocol. 
+
+Namespaces
+----------
+
+	Zot! uses the namespace "http://purl.org/macgirvin/zot".
+
+	Some Atom elements use DFRN extensions, which are designated by
+	the reference "http://purl.org/macgirvin/dfrn/1.0".
+
+	Several other namespaces (such as activitystreams) are used where 
+	applicable.
+
+
+
+Service discovery
+-----------------
+ 
+	Communications via Zot! use email style addresses, which are resolved via
+webfinger/lrdd. Zot! discovery requires an XRD link with a link relation of 
+"http://purl.org/macgirvin/zot", with MIME-type "application/json". 
+
+The href parameter of this link when fetched, returns a JSON document
+containing all the information necessary to establish communications with the
+designated address using Zot!.
+
+Example XRD entry:
+
+    <Link rel="http://purl.org/macgirvin/zot" 
+		type="application/json" href="http://example.com/zinfo/alice" />
+
+Fetching "http://example.com/zinfo/alice" returns
+
+{
+	"fullname":"Alice Springer",
+	"nickname":"alice",
+	"photo":"http:\/\/example.com\/photo\/profile\/1.jpg",
+	"url":"http:\/\/example.com\/profile\/alice",
+	"id":"http:\/\/example.com\/id\/1",
+	"post":"http:\/\/example.com\/zpost\/alice",
+	"pubkey":"-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAzzBmk0u9m6Fmd0EaXieP\nIkqza6+8p3Jb3rPdbuN9a9NZC+BKkK9tskMfYrwmGBEnpBRrQN893lktz3GxESq5\niNyZcyKjfgxI8J9c5hLA9nRS5SKz9yoxIf+6hBChJiKr03t9DbcxdL9ldKdKft3y\nzpjomHSsIijFCGel1eT2uTq+uFf6D1QCqG8X4jBRmMmIqFxdwGxZggvxn\/3Uwxqo\ngqpAIOdHgdPD2ZNDfRPOUzIWPl5zhqyiiWPbyS4BYGxo65O5NjeZ93t1HYfu1AeM\n9jLNM0YVsjBc69BAssnNgLTlGtnW8Ce97QDk+ON7V61oNIm5Th3mBTvu2kH4k+Vi\n4Z5e6jAK\/ayB+iOfX8s65ALSJorW3g\/6ss8et4hCCoxv2isf5ydafM6R9DnvYlm1\n7JG8PxtWoiV\/CtZiDgKe0Ia5OpNfrZNObiK8At5nWaffqtB9Brwzu7m14EfWZ8+8\nRHXMFIBg9h7PziqEeEfhsWfbK3LgJA+O5HpUCjHoVYO4EBvRjsY0h+L22OY+QPLw\nmTpR2wVbKeTfko27cbgeLC64+lvsoeU7UflaDNRGUzIRBmkMvtJ+HitHr6Rqd65\/\n5UhsCn6QM6YSY3jNdjaLQDfZiB50a6JBHwSIaDRim0ZZoRv8ac\/okPTguSw6lcuK\nWKPGCF\/T1liWkViUJ9RgOvECAwEAAQ==\n-----END PUBLIC KEY-----\n"
+
+}
+
+
+The JSON structure contains everything necessary to initiate communications 
+with this person. The only fields which are required are "post" which provides 
+a Zot! post endpoint, and "pubkey" which is the person's public key.
+
+Public keys are represented in ASN.1/DER format and represent the public
+component of an RSA compatible encryption pair. 
+
+All other fields are optional. A name, photo, and url SHOULD be
+provided if available, to assist people in verifying the correctness or
+appropriateness of a given address. 
+
+"url" is typically a profile page or homepage on the system. If "id" is
+provided, it MUST be globally unique. Typically this will consist of the site 
+URL appended with a unique user identifier on the system.
+ 
+
+Connections
+-----------
+
+In order to communicate with a Zot! identity, you must first request an ID for 
+communication with that person/identity.
+
+For our example, let's use "bob@bob.xyz", who wishes to communicate with 
+"alice@alice.xyz".
+
+Bob's server uses webfinger to discover Alice's communication details and
+retrieves the JSON information structure. 
+
+Then an HTTP GET request is made to Alice's "post" endpoint, with a single
+parameter, "sender", which is Bob's address:
+
+	http://alice.xyz/post/alice?sender=bob@bob.xyz
+
+[GET paramters must be URL-encoded unless specified otherwise. Some binary
+information is base64url encoded as described elsewhere.]
+
+alice.xyz generates a "zid" for Bob, encrypts this with her private key,
+then encrypts it with Bob's public key (which was obtained through reverse
+discovery), and base64url-encodes the result. This will be returned to Bob 
+as "zid_encoded". The "zid" MUST be unique on alice.xyz. It is not necessary
+for it to be unique on bob.xyz.
+
+alice.xyz will then generate a second psuedo-random string using the same
+method. This will be returned as "zkey_encoded" and represents a verification
+key to be used to verify Bob's identity if he ever moves to another server.
+
+
+{
+
+	"zid_encoded":"ABC123...[more base64 stuff]",
+	"zkey_encoded":"CCAABB...[more base64 stuff]"
+}
+
+
+	bob.xyz reverses the encryption steps and stores the results in a private 
+location. Once Bob has these keys he is capable of sending messages to Alice. 
+Alice MAY decide at any time not to accept messages from Bob, and this MAY be 
+the default condition.  
+
+
+Send-Message
+------------
+
+	The first message Bob sends SHOULD be an activitystreams "request-friend"
+message. The same process may be used to send any type of message or stream of
+messages.
+
+	Bob contacts the "post" endpoint. He will now provide his decoded "zid" 
+which is "123456789" in our example.
+
+	GET http://alice.xyz/post/alice?zid=123456789
+ 
+	alice.xyz looks up the "zid" and sees that it belongs to Bob, then 
+creates a challenge to verify Bob's identity.
+
+	Here's the psuedo code for generating the challenge:
+
+	$random = random text string, no periods // e.g. "dspof1934"
+	$zid = Bob's zid, no periods
+
+	$challenge = $zid concatenate with a period and concatenate with $random
+
+	$challenge = "123456789.dspof1934";
+
+	Now the challenge is encrypted with Alice's private key, and the result
+encrypted with Bob's public key, and the result base64url-encoded. This is
+returned as a JSON response.
+
+{
+
+	"challenge" : "FF10A2...[encoded challenge]",
+	"perms" : "none"
+
+}
+
+	"perms" indicates the permissions Bob has in posting. It is a list of 
+permissions. Possible values are "none", "post", and "remote". "none"
+indicates no permission at all. The only message that will be accepted from
+Bob is a friend-request. Any other messages MAY be ignored or rejected. "post" 
+allows Bob to send any message. "remote" will be covered later.
+
+
+bob.xyz receives the challenge string, and reverses the encryption and
+concatenation to determine the $random component. If this fails, the
+communication to Alice is suspect, and bob.xyz aborts the attempt. Let's 
+assume everything worked and that bob.xyz discovers $random = "dspof1934".
+
+bob.xyz initiates a second connection to alice.xyz, this time containing the
+payload, the friend-request message. First it is going to be encrypted for
+transport.
+
+We will use the aes_encrypt() algorithm described later in this document. 
+
+A random encryption key is generated. 
+
+The message payload (an Atom/XML document) is encrypted using aes_encrypt()
+using the key and base64url encoded. The key is then encrypted with Bob's
+private key, then Alice's public key and base64url encoded.
+
+bob.xyz now opens a POST request to alice.xyz
+
+	POST http://alice.xyz/post/alice 
+
+	with the following POST parameters:
+
+	"zid" => Bob's zid 
+	"result" => The $random component from the challenge
+	"aes_key" => the encrypted AES encryption key
+	"data" => the encrypted payload
+
+
+alice.xyz checks that "result" matches the initial challenge. If this fails,
+Bob's communication is suspect. Then the aes_key is decoded, and used to
+decode the data payload. 
+
+The data is then consumed or rejected.
+
+alice.xyz returns a JSON response
+
+{
+	"success" : "true"
+}
+
+or 
+
+{
+	"error" : "Human readable error text"
+}
+
+
+Remote Access
+-------------
+
+
+Some social networking functions may require authorisation on a remote site
+in a decentralised network. Remote access ability allows one to connect as an
+authenticated identity without passwords, such as to view private photo albums 
+and/or profiles.
+
+The same authentication mechanism is used, except instead of a payload being
+POST'ed to the remote site, a subsequent GET request is made with the
+challenge result and a destination URL.
+
+	GET http://alice.xyz/post/alice?result=dspof1934&zid=123456789&dest=http://alice.xyz/profile/alice
+
+	The "dest" (destination) parameter may be one of the symbolic locations:
+	
+	profile  
+	photos
+	status
+
+	or a full url of the page requested.
+
+	If the authentication succeeds and permission is allowed, the requesting
+browser is redirected to the appropriate page, and MAY be provided a cookie
+to access other protected pages. If authentication fails or the destination
+is unavailable, the end destination is undefined. Implementations MAY redirect
+to a public profile page. 
+
+
+Relocation
+----------
+
+[This section under construction]
+
+If Bob subsequently moves to another service provider, he must request Alice
+to update her records. This is accomplished with a GET to the "post" endpoint.
+Bob provides the zkey which was given him initially, and is encrypted with his
+current private key, then with Alice's public key, and base64url_encoded.
+
+	GET http://alice.xyz/post/alice?zid=123456789&newloc=bob@newbob.xyz&zkey=ab3c7...
+
+alice.com verifies the zkey against the new location and updates any
+records necessary to indicate that Bob has now moved and Alice's future
+communications with Bob will use the new location.
+
+alice.com MAY reject this request if the JSON service discovery document for
+Bob at his original address does not contain a "forward" entry mentioning the
+new location. 
+
+alice.xyz returns a JSON response
+
+{
+	"success" : "true"
+}
+
+or 
+
+{
+	"error" : "Human readable error text"
+}
+
+
+
+ 
+
+
+Directory Services
+------------------
+
+Directory services are outside the scope of this document. 
+
+
+Appendix A
+----------
+
+AES encryption algorithm example using PHP
+
+
+function aes_encrypt($val,$ky)
+{
+    $key="\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+    for($a=0;$a<strlen($ky);$a++)
+      $key[$a%16]=chr(ord($key[$a%16]) ^ ord($ky[$a]));
+    $mode=MCRYPT_MODE_ECB;
+    $enc=MCRYPT_RIJNDAEL_128;
+    $val=str_pad($val, (16*(floor(strlen($val) / 16)+(strlen($val) % 16==0?2:1))), chr(16-(strlen($val) % 16)));
+    return mcrypt_encrypt($enc, $key, $val, $mode, mcrypt_create_iv( mcrypt_get_iv_size($enc, $mode), MCRYPT_DEV_URANDOM));
+}
+
+
+
+function aes_decrypt($val,$ky)
+{
+    $key="\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+    for($a=0;$a<strlen($ky);$a++)
+      $key[$a%16]=chr(ord($key[$a%16]) ^ ord($ky[$a]));
+    $mode = MCRYPT_MODE_ECB;
+    $enc = MCRYPT_RIJNDAEL_128;
+    $dec = @mcrypt_decrypt($enc, $key, $val, $mode, @mcrypt_create_iv( @mcrypt_get_iv_size($enc, $mode), MCRYPT_DEV_URANDOM ) );
+    return rtrim($dec,(( ord(substr($dec,strlen($dec)-1,1))>=0 and ord(substr($dec, strlen($dec)-1,1))<=16)? chr(ord( substr($dec,strlen($dec)-1,1))):null));
+}
+
+Appendix B
+----------
+
+Zot! concepts inherited from DFRN
+
+DFRN recognises two distinct individuals with respect to information
+ownership. There can be both an "author" (the person who provided the
+communication) and an "owner" - who is the person on whose homepage or 
+profile page the information was posted. These are not necessarily the same
+person. The author is always able to delete his/her posts, but has no 
+control over distribution. The owner has control of distribution and 
+allowing viewing rights.
+
+Feeds may contain updated profile information, and also notices of updates
+and deletions to existing content. A conforming DFRN implementation MUST
+honour these updates and deletions. DFRN information exchange is primarily
+via Atom [RFC4287] with the Atom Tombstone [currently
+draft-snell-atompub-tombstones-11] and threading [RFC4685] extensions.
+
+Default data format is bbcode sent as text/plain
+
+The content of a feed depends on the source of the parent item in the
+conversation. If the topmost post in a thread originated on this system, the
+notification messages include the complete conversation (the original post 
+and all of the followup comments). Some of these items may be seen more than
+once on some of the notified sites, but will be ignored as duplicates. This is
+because followup comments may originate in different places and the
+origination site is responsible for amalgamating and distributing them to all
+concerned parties, such that all participants in a thread are notified of all
+the related comments. Only the origination site has complete knowledge of the
+complete set of participants.
+
+If the topmost post in a thread originated on somebody else's system, and you
+replied to it, your notification feed will only include your comment and will
+be sent only to the site where the post originated. That site will then replay
+the entire thread in notifications to all of the other known participants.
+
+The same logic applies if you delete a comment you posted earlier. You notify
+the owner of the topmost item in the conversation and they will distribute the
+delete notification to all other parties that may have a record of your
+original comment.
+
+Specific tags used within DFRN feeds
+
+<dfrn:private>1</dfrn:private>
+
+The "private" tag indicates a message (feed item) has been sent with access
+controls placed on it (e.g. it does not have public distribution). Only the
+sender may know for sure the scope of distribution, and there is no way within
+the existing protocol for message recipients to know exactly who can see the
+message, but this flag may be used to provide a visual/social indication that
+the message is not or should not be made publicly visible and/or discussed
+openly, nor shared/forwarded to others via the UI.
+
+<dfrn:env>...data...</dfrn:env>
+
+BBcode often gets mangled in transport, especially whitespace. The env tag
+contains the original bbcode content base64-URL encoded in the manner
+prescribed by the Salmon protocol to protect it against text mangling.
+
+There are several other elements within the Atom-DFRN namespace. At the feed 
+level:
+
+	<id>http://example.com</id>
+	<title>Barbara Jensen</title>
+	<updated>2010-08-05T09:41:02Z</updated>
+
+	<author>
+		<name dfrn:updated="2010-08-01T00:00:00Z">Barbara Jensen</name>
+		<uri>http://example.com/profile/bjensen</uri>
+		<link rel="photo" dfrn:updated="2010-08-03T01:22:00Z" type="image/jpeg"
+			href="http://example.com/bjensen-thumb.jpg" />
+		<dfrn:birthday>2011-05-13T14:00:00Z</dfrn:birthday>
+	</author>
+
+Update timestamps are provided so that we know when to change the contact name
+or profile photo for display elsewhere.
+
+Birthday is an optional item and represents the person's next birthday
+converted from their own timezone to UTC. This is so that birthday
+notifications will be sent on the correct day and the correct time (to the 
+person having the birthday) no matter where in the world the notification
+originates. Privacy concerns should be honoured before publishing this
+information.
+
+
+At the item level:
+	<author>
+		<name>Bob Smith</name>
+		<uri>http://example.com/profile/bsmith<uri>
+		<link rel="photo" dfrn:updated="2010-08-03T01:22:00Z" type="image/jpeg"
+			href="http://example.com/bsmith.jpg" />
+	</author>
+
+	<dfrn:owner>
+		<name>Barbara Jensen</name>
+		<uri>http://example.com/profile/bjensen</uri>
+		<link rel="photo" dfrn:updated="2010-08-03T01:22:00Z" type="image/jpeg"
+			href="http://example.com/bjensen-thumb.jpg" />
+	</dfrn:owner>
+
+This represents a post that Bob Smith made to Barbara Jensen's wall, and that
+is being distributed to friends of Barbara. Barbara is the owner by virtue of
+the fact that the post was made to her personal profile page. Friends of
+Barbara are able to view this item, but may not have any relationship with
+Bob.
+
+Private email template (at the feed level):
+
+<dfrn:mail>
+
+	<dfrn:sender>
+		<dfrn:name>John Doe</dfrn:name>
+		<dfrn:uri>http://example.com/profile/jdoe</dfrn:uri>
+		<dfrn:avatar>http://example.com/jdoe-thumb.jpg</dfrn:avatar>
+	</dfrn:sender>
+
+	<dfrn:id>8caa6c58-7c72-c8d4-72d6-eae62c9839f9</dfrn:id>
+	<dfrn:in-reply-to>urn:uuid:6b91845a-dae0-1679-dc77-efa991edb714</dfrn:inreply-to>
+	<dfrn:sentdate>2010-08-01T22:14:06Z</dfrn:sentdate>
+	<dfrn:subject>Hi Barbara</dfrn:subject>
+	<dfrn:content>Did you see the fireworks last night?</dfrn:content>
+
+</dfrn:mail>
+
+
+This represents a private email from John to Barbara (the recipient is 
+implied, as the feed itself is personalised to communications with Barbara).
+There is an "in-reply-to" field indicating a continuing exchange with
+in-reply-to pointing to the parent of the thread. 
+

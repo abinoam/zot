@@ -1,0 +1,25 @@
+
+    ********
+    * Zot! *
+    ********
+
+    Zot! Communications Server
+
+    http://project.friendika.com
+
+	Zot! represents a major fork of the Friendika project. Currently we are
+re-writing major components and reviewing many code assumptions. Lots of
+unnecessary stuff is being tossed. The Zot! communication layers have not 
+yet been implemented, and will start to show up over the next few weeks as
+the infrastructure solidifies. 
+
+	This code does not work or do anything useful at this time. 
+It is being provided publicly so that those working on Friendika bug fixes
+and patches may also apply them to Zot, where applicable.
+
+	The database schema is also currently under review and automatic updates
+are not yet applied. If you install this server, you will need to re-install
+it whenever the database changes - which will be frequently for at least the
+next few weeks.  
+
+
