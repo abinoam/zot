@@ -1,0 +1,9 @@
+favicon.*
+.htconfig.php
+\#*
+include/jquery-1.4.2.min.js
+*.log
+*.out
+*.version*
+favicon.*
+home.html
