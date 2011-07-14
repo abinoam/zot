@@ -76,9 +76,11 @@ All other fields are optional. A name, photo, and url SHOULD be
 provided if available, to assist people in verifying the correctness or
 appropriateness of a given address. 
 
-"url" is typically a profile page or homepage on the system. If "id" is
-provided, it MUST be globally unique. Typically this will consist of the site 
-URL appended with a unique user identifier on the system.
+"url" is typically a profile page or homepage on the system. 
+
+If "id" is provided, it MUST be globally unique. Typically this will consist
+of the site URL appended with a unique user identifier on the system. It MAY
+be the email-style address used by webfinger.
  
 
 Connections

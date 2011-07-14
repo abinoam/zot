@@ -92,25 +92,10 @@ if((x($_SESSION,'language')) && ($_SESSION['language'] !== $lang)) {
 	load_translation_table($lang);
 }
 
-
-/**
- *
- * For Mozilla auth manager - still needs sorting, and this might conflict with LRDD header.
- * Apache/PHP lumps the Link: headers into one - and other services might not be able to parse it
- * this way. There's a PHP flag to link the headers because by default this will over-write any other 
- * link header. 
- *
- * What we really need to do is output the raw headers ourselves so we can keep them separate.
- *
- */
- 
-// header('Link: <' . z_path() . '/amcd>; rel="acct-mgmt";');
-
-if((x($_SESSION,'authenticated')) || (x($_POST,'auth-params')) || ($a->module === 'login'))
+if((x($_SESSION,'authenticated')) || (x($_POST,'auth-params')) || ($a->module === 'login')) {
 	require("auth.php");
-
-if(! x($_SESSION,'authenticated'))
-	header('X-Account-Management-Status: none');
+	login_logout();
+}
 
 if(! x($_SESSION,'sysmsg'))
 	$_SESSION['sysmsg'] = '';

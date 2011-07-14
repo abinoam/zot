@@ -479,6 +479,11 @@ function z_path() {
 	return $base;
 }
 
+function z_root() {
+	global $a;
+	return $a->get_baseurl();
+}
+
 function absurl($path) {
 	if(strpos($path,'/') === 0)
 		return z_path() . $path;
