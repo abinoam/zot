@@ -102,13 +102,6 @@ function contact_selector($selname, $selclass, $preselected = false, $options) {
 	if(intval($x['exclude']))
 		$sql_extra .= sprintf(" AND `id` != %d ", intval($x['exclude']));
 
-	if(is_array($x['networks']) && count($x['networks'])) {
-		for($y = 0; $y < count($x['networks']) ; $y ++)
-			$x['networks'][$y] = "'" . dbesc($x['networks'][$y]) . "'";
-		$str_nets = implode(',',$x['networks']);
-		$sql_extra .= " AND `network` IN ( $str_nets ) ";
-	}
-
 	if($x['single'])
 		$o .= "<select name=\"$selname\" id=\"$selclass\" class=\"$selclass\" size=\"" . $x['size'] . "\" >\r\n";
 	else 
@@ -165,15 +158,6 @@ function contact_select($selname, $selclass, $preselected = false, $size = 4, $p
 	if($privmail || $celeb) {
 		$sql_extra .= sprintf(" AND `rel` = %d ", intval(REL_BUD));
 	}
-
-	if($privmail) {
-		$sql_extra .= " AND `network` IN ( 'dfrn' ) ";
-	}
-	elseif($privatenet) {	
-		$sql_extra .= " AND `network` IN ( 'dfrn', 'mail', 'face' ) ";
-	}
-
-
 
 	if($privmail)
 		$o .= "<select name=\"$selname\" id=\"$selclass\" class=\"$selclass\" size=\"$size\" >\r\n";

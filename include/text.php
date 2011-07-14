@@ -25,8 +25,9 @@ function replace_macros($s,$r) {
 // random hash, 64 chars
 
 if(! function_exists('random_string')) {
-function random_string() {
-	return(hash('sha256',uniqid(rand(),true)));
+function random_string($len = 0) {
+	$s = hash('sha256',uniqid(rand(),true));
+	return(($len) ? substr($s,0,$len) : $s);
 }}
 
 /**

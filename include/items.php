@@ -2,7 +2,20 @@
 
 require_once('bbcode.php');
 require_once('oembed.php');
-require_once('include/salmon.php');
+//require_once('include/salmon.php');
+
+function get_guid() {
+	$exists = true;
+	do {
+		$s = random_string(32);
+		$r = q("select id from guid where guid = '%s' limit 1", dbesc($s));
+		if(! results($r))
+			$exists = false;
+	} while($exists);
+	q("insert into guid ( guid ) values ( '%s' ) ", dbesc($s));
+	return $s;
+}
+
 
 function get_feed_for(&$a, $dfrn_id, $owner_nick, $last_update, $direction = 0) {
 

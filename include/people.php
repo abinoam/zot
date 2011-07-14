@@ -23,9 +23,9 @@ class person {
 		return(array(
 			'name'  => $this->name,
 			'photo' => $this->photo,
-			'url'   => $this->url
-			'id'    => $this->id)
-		);
+			'url'   => $this->url,
+			'id'    => $this->id
+		));
 	}
 
 	function to_json() {

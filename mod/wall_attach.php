@@ -2,6 +2,7 @@
 
 require_once('include/attach.php');
 require_once('include/datetime.php');
+require_once('include/items.php');
 
 function wall_attach_post(&$a) {
 
@@ -10,7 +11,7 @@ function wall_attach_post(&$a) {
 		$r = q("SELECT * FROM `user` WHERE `nickname` = '%s' AND `blocked` = 0 LIMIT 1",
 			dbesc($nick)
 		);
-		if(! count($r))
+		if(! results($r))
 			return;
 
 	}
@@ -62,7 +63,7 @@ function wall_attach_post(&$a) {
 	$filedata = @file_get_contents($src);
 
 	$mimetype = mime_content_type($src);
-	$hash = random_string();
+	$hash = get_guid();
 	$created = datetime_convert();
 
 	$r = q("INSERT INTO `attach` ( `uid`, `hash`, `filename`, `filetype`, `filesize`, `data`, `created`, `edited`, `allow_cid`, `allow_gid`,`deny_cid`, `deny_gid` )
@@ -99,7 +100,7 @@ function wall_attach_post(&$a) {
 		killme();
 	}
 
-	echo  '<br /><br />[attachment]' . $r[0]['id'] . '[/attachment]' . '<br />';
+	echo  '<br /><br />[attachment]' . $r[0]['hash'] . '[/attachment]' . '<br />';
 
 	killme();
 	// NOTREACHED

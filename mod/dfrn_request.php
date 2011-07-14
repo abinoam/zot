@@ -101,7 +101,7 @@ function dfrn_request_post(&$a) {
 				}
 	
 				if(is_array($contact_record)) {
-					$r = q("UPDATE `contact` SET `ret-aes` = %d WHERE `id` = %d LIMIT 1",
+					$r = q("UPDATE `contact` SET `ret_aes` = %d WHERE `id` = %d LIMIT 1",
 						intval($aes_allow),
 						intval($contact_record['id'])
 					);

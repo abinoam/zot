@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS contact (
   poll text NOT NULL,
   confirm text NOT NULL,
   aes_allow tinyint(1) NOT NULL DEFAULT '0',
-  `ret-aes` tinyint(1) NOT NULL DEFAULT '0',
+  ret_aes tinyint(1) NOT NULL DEFAULT '0',
   usehub tinyint(1) NOT NULL DEFAULT '0',
   subhub tinyint(1) NOT NULL DEFAULT '0',
   hub_verify char(255) NOT NULL,
@@ -126,10 +126,10 @@ CREATE TABLE IF NOT EXISTS contact (
   PRIMARY KEY (id),
   KEY uid (uid),
   KEY self (self),
-  KEY `issued-id` (issued_id),
-  KEY `dfrn-id` (dfrn_id),
   KEY blocked (blocked),
-  KEY readonly (readonly)
+  KEY readonly (readonly),
+  KEY issued_id (issued_id),
+  KEY dfrn_id (dfrn_id)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `event` (
@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS group_member (
   id int(10) unsigned NOT NULL AUTO_INCREMENT,
   uid int(10) unsigned NOT NULL,
   gid int(10) unsigned NOT NULL,
-  `contact-id` int(10) unsigned NOT NULL,
+  contact_id int(10) unsigned NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS intro (
   id int(10) unsigned NOT NULL AUTO_INCREMENT,
   uid int(10) unsigned NOT NULL,
   fid int(11) NOT NULL DEFAULT '0',
-  `contact-id` int(11) NOT NULL,
+  contact_id int(11) NOT NULL,
   knowyou tinyint(1) NOT NULL,
   duplex tinyint(1) NOT NULL DEFAULT '0',
   note text NOT NULL,
@@ -357,10 +357,10 @@ CREATE TABLE IF NOT EXISTS photo (
   deny_gid mediumtext NOT NULL,
   PRIMARY KEY (id),
   KEY uid (uid),
-  KEY `resource-id` (resource_id),
   KEY album (album),
   KEY scale (scale),
   KEY `profile` (`profile`),
+  KEY resource_id (resource_id),
   FULLTEXT KEY allow_cid (allow_cid),
   FULLTEXT KEY allow_gid (allow_gid),
   FULLTEXT KEY deny_cid (deny_cid),

@@ -9,12 +9,12 @@ function attach_init(&$a) {
 		return;
 	}
 
-	$item_id = intval($a->argv[1]);
+	$item_id = $a->argv[1];
 
 	// Check for existence, which will also provide us the owner uid
 
-	$r = q("SELECT * FROM `attach` WHERE `id` = %d LIMIT 1",
-		intval($item_id)
+	$r = q("SELECT * FROM `attach` WHERE `hash` = %d LIMIT 1",
+		dbesc($item_id)
 	);
 	if(! count($r)) {
 		notice( t('Item was not found.'). EOL);
@@ -25,7 +25,7 @@ function attach_init(&$a) {
 
 	// Now we'll see if we can access the attachment
 
-	$r = q("SELECT * FROM `attach` WHERE `id` = '%d' $sql_extra LIMIT 1",
+	$r = q("SELECT * FROM `attach` WHERE `hash` = '%d' $sql_extra LIMIT 1",
 		dbesc($item_id)
 	);
 
