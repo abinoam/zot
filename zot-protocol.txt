@@ -13,7 +13,7 @@ protocol consists of two basic functions: send-message and remote-access.
 
 These functions are built on top of other web standards, such as 
 webfinger/lrdd and atom/activitystreams. Communications are encrypted and
-both sides of the communication verified through crytpographic means before
+both sides of the communication verified through cryptographic means before
 communication is allowed.
 
 Zot! does not prove identity. It verifies communications endpoints, and
@@ -100,7 +100,7 @@ parameter, "sender", which is Bob's address:
 
 	http://alice.xyz/post/alice?sender=bob@bob.xyz
 
-[GET paramters must be URL-encoded unless specified otherwise. Some binary
+[GET parameters must be URL-encoded unless specified otherwise. Some binary
 information is base64url encoded as described elsewhere.]
 
 alice.xyz generates a "zid" for Bob, encrypts this with her private key,
@@ -109,7 +109,7 @@ discovery), and base64url-encodes the result. This will be returned to Bob
 as "zid_encoded". The "zid" MUST be unique on alice.xyz. It is not necessary
 for it to be unique on bob.xyz.
 
-alice.xyz will then generate a second psuedo-random string using the same
+alice.xyz will then generate a second pseudo-random string using the same
 method. This will be returned as "zkey_encoded" and represents a verification
 key to be used to verify Bob's identity if he ever moves to another server.
 
@@ -142,7 +142,7 @@ which is "123456789" in our example.
 	alice.xyz looks up the "zid" and sees that it belongs to Bob, then 
 creates a challenge to verify Bob's identity.
 
-	Here's the psuedo code for generating the challenge:
+	Here's the pseudo code for generating the challenge:
 
 	$random = random text string, no periods // e.g. "dspof1934"
 	$zid = Bob's zid, no periods
